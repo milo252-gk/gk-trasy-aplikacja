@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Ikona programu na pulpicie i na ekranie telefonu. Grafit i pomarancz
+       GK Factory; ksztalt to skrot busa, zeby dalo sie ja poznac w 32 px. -->
+  <rect width="192" height="192" rx="34" fill="#4E4E4E"/>
+  <path d="M34 118V74a8 8 0 0 1 8-8h56a8 8 0 0 1 8 8v44z" fill="#fff"/>
+  <path d="M106 86h22l20 22v10h-42z" fill="#E0922E"/>
+  <circle cx="62" cy="126" r="13" fill="#fff"/><circle cx="62" cy="126" r="6" fill="#4E4E4E"/>
+  <circle cx="128" cy="126" r="13" fill="#fff"/><circle cx="128" cy="126" r="6" fill="#4E4E4E"/>
+  <path d="M28 118h136" stroke="#E0922E" stroke-width="7" stroke-linecap="round"/>
+</svg>
