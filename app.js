@@ -1,7 +1,7 @@
 /* Rdzen aplikacji: logowanie, przelaczanie ekranow, rozmowa z serwerem
    i wysylanie kolejki offline.                                              */
 
-const WERSJA_SKRYPTU = 'trasex-1c7d263b2ed1';   // stempluje zbuduj.py
+const WERSJA_SKRYPTU = 'trasex-d8e7201de653';   // stempluje zbuduj.py
 
 /* Pamięć przeglądarki (localStorage) — wyłącznie przez Pamiec i ZAWSZE
    z przedrostkiem „gk-trasy.”.
@@ -287,9 +287,10 @@ function dataLokalna(d) {
 }
 function dzisiaj() { return dataLokalna(new Date()); }
 /* Znacznik czasu zapisany przez toISOString() (UTC) — na ekran po czasie lokalnym. */
+/* Data i godzina na ekranie: „06.10.2026 14:20” (wzór GK, STYL-GK punkt 6). */
 function czasZIso(iso) {
   const d = new Date(iso || '');
-  return isNaN(d.getTime()) ? '' : dataLokalna(d) + ' ' + d.toTimeString().slice(0, 5);
+  return isNaN(d.getTime()) ? '' : polskaData(dataLokalna(d)) + ' ' + d.toTimeString().slice(0, 5);
 }
 function godzinaTeraz() { return new Date().toTimeString().slice(0, 5); }
 function czasTeraz() {
@@ -863,7 +864,8 @@ async function odswiezStanSieci() {
     ? `${stan.odrzucone} ${odmiana(stan.odrzucone, 'zapis nie przeszedł', 'zapisy nie przeszły',
         'zapisów nie przeszło')} — dotknij ikony konta`
     : !stan.online
-      ? (stan.wKolejce ? `Brak sieci — ${ileZapisow} czeka na wysłanie` : 'Brak sieci — pracujesz offline')
+      ? (stan.wKolejce ? `Brak sieci — ${ileZapisow} czeka na wysłanie`
+                       : 'Brak sieci — zapisy zostają w telefonie')
       : (stan.wKolejce ? `${ileZapisow} w wysyłce` : 'Połączono');
   const znacznik = document.getElementById('znacznik-kolejki');
   if (znacznik) znacznik.textContent = stan.wKolejce ? `⏳ ${stan.wKolejce}` : '';
@@ -947,6 +949,20 @@ function pokazLogowanie() {
   document.getElementById('ekran-logowania').classList.remove('ukryty');
   document.getElementById('blad-logowania').textContent = '';
   document.getElementById('form-logowania').reset();
+  pokazInfoKont();
+}
+
+/* „Konto zakłada administrator w Panelu Kierownika → Administracja.” — tylko
+   gdy konta naprawdę przychodzą z Panelu. Pyta /api/zyje (bez logowania);
+   brak odpowiedzi = brak linii, logowanie na to nie czeka. */
+async function pokazInfoKont() {
+  const linia = document.getElementById('info-kont');
+  if (!linia) return;
+  try {
+    const odp = await pobierz('/api/zyje');
+    const w = odp.ok ? await odp.json() : {};
+    linia.hidden = !(w && w.konta_z_panelu);
+  } catch (e) { linia.hidden = true; }
 }
 
 /* Serwer odrzucił sesję (401): zmiana PIN-u, konto wyłączone w biurze albo
@@ -995,10 +1011,10 @@ function oknoPonownegoLogowania() {
   okno({
     tytul: 'Zaloguj się ponownie',
     tresc: `<p class="male">Nic nie zginęło — zapisy z telefonu wyślą się po zalogowaniu.</p>
-      <label>Imię i nazwisko albo login
+      <label>Imię i nazwisko
         <input id="pl-login" autocomplete="username" autocapitalize="none" value="${escHtml(login)}"></label>
-      <label>PIN
-        <input id="pl-pin" type="password" inputmode="numeric" autocomplete="current-password"></label>
+      <label>PIN / hasło
+        <input id="pl-pin" type="password" autocomplete="current-password"></label>
       <div class="blad-logowania" id="pl-blad"></div>`,
     przyciski: [
       { napis: 'Później', klik: z => z() },
@@ -1175,6 +1191,19 @@ function trybOffline() {
    przeglądarka chodzi na starej kopii — i to widać od razu, bez zgadywania.
    Do tego kilka żywych liczb o warstwach okna, bo mapa nad oknem wracała
    czterokrotnie i za każdym razem brakowało właśnie tych danych.           */
+/* Wersja dla ludzi bez starego przedrostka („wersja 1c7d263b2ed1”, nie trasex-…). */
+function wersjaDlaLudzi(w) {
+  return String(w || '?').replace(/^(trasex|gk-trasy)-/, '');
+}
+
+/* Stopka okna konta: sama wersja. Ramka z trzema stemplami i warstwami okna
+   (stempelWersji) jest diagnostyką — widzi ją tylko administrator; reszta
+   dostaje ją wyłącznie wtedy, gdy przeglądarka ma starą kopię (z przyciskiem). */
+function stopkaWersji() {
+  const skrypt = (typeof WERSJA_SKRYPTU === 'string') ? WERSJA_SKRYPTU : stan.uz.wersja;
+  return `<p class="male slaby wersja-stopka">wersja ${escHtml(wersjaDlaLudzi(skrypt))}</p>`;
+}
+
 function stempelWersji() {
   const dysk = stan.uz.wersja || '?';
   const skrypt = (typeof WERSJA_SKRYPTU === 'string') ? WERSJA_SKRYPTU : '?';
@@ -1185,6 +1214,13 @@ function stempelWersji() {
   const osobneAdresy = !!API_BAZA;
   const zgodne = osobneAdresy ? skrypt === arkusz : (dysk === skrypt && dysk === arkusz);
   const pagesStarsze = osobneAdresy && zgodne && dysk !== '?' && dysk !== skrypt;
+  if (!jestAdministratorem()) {
+    return zgodne ? '' : `
+    <div class="wstega blad" id="stempel-wersji" style="margin-top:10px">
+      <b>Przeglądarka ma starą kopię programu</b>
+      <button class="maly" id="btn-odswiez-program" style="margin-top:8px">Odśwież program</button>
+    </div>`;
+  }
   return `
     <div class="wstega ${zgodne ? 'info' : 'blad'}" id="stempel-wersji" style="margin-top:10px">
       <b>${zgodne ? 'Program aktualny' : 'Przeglądarka ma starą kopię programu'}</b>
@@ -1281,13 +1317,12 @@ function oknoKonta() {
   okno({
     tytul: 'Moje konto',
     tresc: `
-      <p><b>${escHtml(stan.uz.imie)}</b> · ${escHtml(stan.uz.login)}
-         · ${NAZWA_ROLI[stan.uz.rola] || stan.uz.rola}</p>
+      <p><b>${escHtml(stan.uz.imie)}</b> · ${NAZWA_ROLI[stan.uz.rola] || stan.uz.rola}</p>
       ${stempelWersji()}
       <fieldset><legend>Wygląd</legend>
+        <label class="plaska"><input type="radio" name="motyw" value="auto">Jak w telefonie</label>
         <label class="plaska"><input type="radio" name="motyw" value="jasny">Jasny</label>
         <label class="plaska"><input type="radio" name="motyw" value="ciemny">Ciemny</label>
-        <label class="plaska"><input type="radio" name="motyw" value="auto">Jak w telefonie</label>
         <p class="male slaby">Dotyczy tego urządzenia, nie konta — zostaje po wylogowaniu,
            a na wspólnym telefonie widzą to samo wszyscy.</p>
       </fieldset>
@@ -1297,17 +1332,18 @@ function oknoKonta() {
           : 'Nowe albo zmienione zlecenie na dziś i jutro oraz uwagi od biura — także przy zamkniętej aplikacji.'}</p>
         <div id="push-konto"><p class="male slaby">Sprawdzam…</p></div>
       </fieldset>
-      <fieldset><legend>Zmiana PIN-u</legend>
+      <fieldset><legend>${jestBiuro() ? 'Zmień hasło' : 'Zmień PIN'}</legend>
         ${stan.uz.zrodlo === 'gk' && stan.uz.konta_z_panelu ? `<p class="male slaby">Konto z Panelu
-          (GK Panel Kierownika) — nowy PIN działa we wszystkich aplikacjach GK.</p>` : ''}
-        <label>Obecny PIN<input id="pin-stary" type="password" inputmode="numeric"></label>
-        <label>${stan.uz.zrodlo === 'gk' && stan.uz.konta_z_panelu
-          ? (jestBiuro() ? 'Nowe hasło (min. 8 znaków)' : 'Nowy PIN (4–8 cyfr)')
-          : 'Nowy PIN (min. 4 znaki)'}<input id="pin-nowy" type="password" inputmode="numeric"></label>
-        <button class="glowny" id="btn-zmien-pin">Zmień PIN</button>
+          (GK Panel Kierownika) — nowy ${jestBiuro() ? 'hasło działa' : 'PIN działa'}
+          we wszystkich aplikacjach GK.</p>` : ''}
+        <label>${jestBiuro() ? 'Obecne hasło' : 'Obecny PIN'}<input id="pin-stary" type="password"
+               inputmode="${trybKlawiaturyPinu()}" autocomplete="current-password" maxlength="128"></label>
+        <label>${opisNowegoPinu()}<input id="pin-nowy" type="password"
+               inputmode="${trybKlawiaturyPinu()}" autocomplete="new-password" maxlength="128"></label>
+        <button class="glowny" id="btn-zmien-pin">${jestBiuro() ? 'Zmień hasło' : 'Zmień PIN'}</button>
       </fieldset>
-      <fieldset><legend>Dane w tym telefonie</legend>
-        <p class="male slaby">W kolejce do wysłania: <b id="ile-w-kolejce">…</b></p>
+      <fieldset><legend>Dane w tym urządzeniu</legend>
+        <p class="male slaby">Czeka na wysłanie: <b id="ile-w-kolejce">…</b></p>
         <p class="male slaby ${stan.obceWKolejce ? '' : 'ukryty'}" id="obce-w-kolejce"></p>
         <div id="odrzucone-zapisy"></div>
         <p class="male slaby">Tryb offline: <b>${escHtml(trybOffline().opis)}</b><br>
@@ -1316,7 +1352,8 @@ function oknoKonta() {
           <button id="btn-wyslij-teraz">Wyślij teraz</button>
           <button id="btn-wyloguj-2">Wyloguj</button>
         </div>
-      </fieldset>`,
+      </fieldset>
+      ${stopkaWersji()}`,
     poOtwarciu: pole => {
       // Przełącza się od razu, bez zamykania okna: cały wygląd wisi na jednym
       // atrybucie <html>, więc nie ma czego przerysowywać.
@@ -1544,31 +1581,62 @@ async function wejdzDoAplikacji() {
   if (stan.uz.haslo_startowe) oknoStartowegoHasla();
 }
 
+/* Zasada nowego PIN-u — ta sama co na serwerze (sprawdz_dlugosc_pinu,
+   sprawdz_pin_gk). Biuro i administrator mają hasło min. 8 znaków także na
+   koncie tutejszym — dawniej okno konta mówiło im „min. 4 znaki”, a serwer
+   odrzucał wszystko krótsze niż 8. Pola PIN-u są bez inputmode="numeric":
+   na telefonie z klawiaturą cyfrową hasła biura nie dałoby się wpisać. */
+function opisNowegoPinu() {
+  if (jestBiuro()) return 'Nowe hasło (min. 8 znaków)';
+  return pinZPanelu() ? 'Nowy PIN (4–8 cyfr)' : 'Nowy PIN (min. 4 znaki)';
+}
+
+function pinZPanelu() { return stan.uz.zrodlo === 'gk' && !!stan.uz.konta_z_panelu; }
+
+/* Klawiatura jak w aplikacjach hali (konto.js): biuro — zwykła (hasło z liter),
+   kierowca z kontem z Panelu — cyfrowa (PIN to 4–8 cyfr). Tutejszy kierowca
+   mógł kiedyś dostać PIN z literami — dla niego też zwykła. */
+function trybKlawiaturyPinu() { return !jestBiuro() && pinZPanelu() ? 'numeric' : 'text'; }
+
 /* Fabryczne hasło „1234" na koncie kierowniczym, przy adresie dostępnym
    z internetu, to najprostsza droga do tego, żeby ktoś obcy zobaczył całą firmę.
    Dlatego pytamy o zmianę przy każdym wejściu, dopóki nie zostanie zmienione.  */
+/* Okno pojawia się przy KAŻDYM słabym PIN-ie z listy (serwer: haslo_startowe),
+   nie tylko przy fabrycznym 1234 — dlatego pyta o obecny PIN, zamiast wysyłać
+   „1234” za człowieka (zły obecny PIN liczy się do blokady jak złe logowanie).
+   Słowa i zasada jak w oknie konta: biuro — hasło min. 8 znaków, kierowca — PIN. */
 function oknoStartowegoHasla() {
   const nazwa = NAZWA_ROLI[stan.uz.rola] || 'biuro';
+  const slowo = jestBiuro() ? 'hasło' : 'PIN';
   okno({
-    tytul: 'Zmień fabryczne hasło',
-    tresc: `<div class="wstega uwaga">Konto „${escHtml(nazwa)}" ma nadal hasło startowe <b>1234</b>.</div>
-      <p class="male">To konto widzi całą firmę — klientów, trasy, raporty i ślady GPS.
-         Jeśli aplikacja jest dostępna z internetu, zostawienie tego hasła oznacza,
+    tytul: jestBiuro() ? 'Zmień hasło — to da się zgadnąć' : 'Zmień PIN — ten da się zgadnąć',
+    tresc: `<div class="wstega uwaga">Konto „${escHtml(nazwa)}" ma ${slowo} z listy najczęściej
+        zgadywanych (np. fabryczne <b>1234</b>).</div>
+      <p class="male">${jestBiuro()
+        ? 'To konto widzi całą firmę — klientów, trasy, raporty i ślady GPS.'
+        : 'To konto widzi trasy i klientów z adresami i telefonami.'}
+         Jeśli aplikacja jest dostępna z internetu, zostawienie go oznacza,
          że dostanie się tu każdy, kto zgadnie adres.</p>
-      <label>Nowe hasło <span class="slaby">(min. 8 znaków)</span>
-        <input id="sh-nowe" type="password" autocomplete="new-password"></label>
-      <label>Powtórz hasło
-        <input id="sh-powtorz" type="password" autocomplete="new-password"></label>`,
+      <label>${jestBiuro() ? 'Obecne hasło' : 'Obecny PIN'}
+        <input id="sh-stary" type="password" inputmode="${trybKlawiaturyPinu()}"
+               autocomplete="current-password" maxlength="128"></label>
+      <label>${opisNowegoPinu()}
+        <input id="sh-nowe" type="password" inputmode="${trybKlawiaturyPinu()}"
+               autocomplete="new-password" maxlength="128"></label>
+      <label>${jestBiuro() ? 'Powtórz nowe hasło' : 'Powtórz nowy PIN'}
+        <input id="sh-powtorz" type="password" inputmode="${trybKlawiaturyPinu()}"
+               autocomplete="new-password" maxlength="128"></label>`,
     przyciski: [
       { napis: 'Później', klik: z => z() },
       { napis: 'Zmień teraz', klasa: 'glowny', klik: async z => {
+        const stary = document.getElementById('sh-stary').value;
         const nowe = document.getElementById('sh-nowe').value;
         if (nowe !== document.getElementById('sh-powtorz').value) {
-          komunikat('Hasła się nie zgadzają', 'blad');
+          komunikat(jestBiuro() ? 'Hasła się nie zgadzają' : 'Nowe PIN-y się nie zgadzają', 'blad');
           return;
         }
-        const w = await sprobuj(() => API.post('/api/zmien-pin', { stary: '1234', nowy: nowe }),
-          'Hasło zmienione');
+        const w = await sprobuj(() => API.post('/api/zmien-pin', { stary, nowy: nowe }),
+          jestBiuro() ? 'Hasło zmienione' : 'PIN zmieniony');
         if (!w) return;
         if (w.token) { stan.token = w.token; Pamiec.zapisz('token', w.token); }
         stan.uz.haslo_startowe = false;

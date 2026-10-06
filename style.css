@@ -13,7 +13,7 @@
 
 :root{
   color-scheme:light;
-  --wersja-arkusza:'trasex-1c7d263b2ed1';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
+  --wersja-arkusza:'trasex-d8e7201de653';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
 
   /* ---- A) BARWY MARKI -------------------------------------------------
      Wzięte wprost z firmowych znaków — próbkowane z plików logo, nie dobrane
@@ -192,6 +192,8 @@ a{color:var(--akcent)}
 .karta-logowania .pod{margin:0 0 20px; color:var(--tekst-slaby); font-size:13px}
 .karta-logowania label{display:block; text-align:left; margin-bottom:14px; font-weight:600; font-size:13px}
 .blad-logowania{color:var(--czerwony); font-size:13px; min-height:18px; margin-bottom:8px; font-weight:600}
+.karta-logowania .info-kont{margin:14px 0 0; color:var(--tekst-slaby); font-size:12.5px; line-height:1.4}
+.wersja-stopka{margin:14px 0 0; text-align:center}
 
 /* ------------------------------------------------------------ formanty */
 input,select,textarea{

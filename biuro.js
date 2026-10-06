@@ -2130,8 +2130,9 @@ function oknoKonta_admin(k) {
         </select></label>
       <p class="male slaby" style="margin:-4px 0 10px">Stąd program liczy kilometry i czas
         tras tego kierowcy, jeśli na samej trasie nie wskazano innego miejsca.</p>
-      ${zPanelu ? '' : `<label>${nowe ? 'PIN (min. 4 znaki)' : 'Nowy PIN — zostaw puste, żeby nie zmieniać'}
-        <input id="ko-pin" type="text" inputmode="numeric" autocomplete="off"></label>`}
+      ${zPanelu ? '' : `<label>${nowe ? 'PIN kierowcy (min. 4 znaki) albo hasło biura (min. 8 znaków)'
+          : 'Nowy PIN / hasło — zostaw puste, żeby nie zmieniać'}
+        <input id="ko-pin" type="text" autocomplete="off"></label>`}
       ${nowe ? '' : `<label class="plaska"><input type="checkbox" id="ko-aktywny" ${k.aktywny ? 'checked' : ''} ${blok}>
         Konto aktywne</label>
         <p class="male slaby">Zmiana PIN-u wylogowuje tę osobę ze wszystkich urządzeń.</p>`}`,
