@@ -31,7 +31,8 @@ async function wczytajMojaTrase(data, zPamieci) {
   } catch (e) {
     const kopia = await Kolejka.przypomnij(klucz);
     if (kopia === null || kopia === undefined) throw e;
-    komunikat('Brak sieci — pokazuję zlecenie z pamięci telefonu');
+    komunikat(stan.sesjaWygasla ? 'Sesja wygasła — pokazuję zlecenie z pamięci telefonu'
+      : 'Brak sieci — pokazuję zlecenie z pamięci telefonu');
     return kopia;
   }
 }

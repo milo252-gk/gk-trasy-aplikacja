@@ -1,7 +1,7 @@
 /* Rdzen aplikacji: logowanie, przelaczanie ekranow, rozmowa z serwerem
    i wysylanie kolejki offline.                                              */
 
-const WERSJA_SKRYPTU = 'trasex-02930acd9614';   // stempluje zbuduj.py
+const WERSJA_SKRYPTU = 'trasex-1c7d263b2ed1';   // stempluje zbuduj.py
 
 /* Pamięć przeglądarki (localStorage) — wyłącznie przez Pamiec i ZAWSZE
    z przedrostkiem „gk-trasy.”.
@@ -50,7 +50,24 @@ const Pamiec = (() => {
     });
     return ile;
   }
-  return { PRZEDROSTEK, czytaj, zapisz, usun, przenies, wspolneZrodlo };
+  /* Klucze WSPÓLNE wszystkich programów GK (bez przedrostka gk-trasy.) —
+     dziś tylko motyw: jeden wybór dla GK Trasy, GK Flota i Panelu. Lista
+     zamknięta, żeby nikt tędy nie sięgnął po cudzy klucz (np. 'token'). */
+  const WSPOLNE = ['gk.motyw'];
+  function czytajWspolny(k) {
+    if (WSPOLNE.indexOf(k) < 0) return null;
+    try { return localStorage.getItem(k); } catch (e) { return null; }
+  }
+  function zapiszWspolny(k, v) {
+    if (WSPOLNE.indexOf(k) < 0) return false;
+    try { localStorage.setItem(k, String(v)); return true; } catch (e) { return false; }
+  }
+  function usunWspolny(k) {
+    if (WSPOLNE.indexOf(k) < 0) return;
+    try { localStorage.removeItem(k); } catch (e) { /* nie ma czego kasować */ }
+  }
+  return { PRZEDROSTEK, czytaj, zapisz, usun, przenies, wspolneZrodlo,
+           czytajWspolny, zapiszWspolny, usunWspolny };
 })();
 Pamiec.przenies(location.hostname);
 
@@ -122,7 +139,15 @@ function poLudzku(e) {
    Reguła „który motyw” istnieje w programie DWA razy: tutaj i w skrypcie
    w <head> index.html, bo tamten musi wykonać się jeszcze przed arkuszem.
    Wolno je zmieniać wyłącznie razem — smoke.js wykonuje tamten kod na
-   atrapach i porównuje wynik z Motyw.policz.                                */
+   atrapach i porównuje wynik z Motyw.policz.
+
+   Klucz jest WSPÓLNY dla programów GK: „gk.motyw” (GK Panel Kierownika
+   i GK Flota czytają ten sam). Na github.io wszystkie stoją pod jednym
+   źródłem, a osoba z trzema programami ustawiała motyw trzy razy.
+   Własny „gk-trasy.motyw” to już tylko migracja: przejmij() przenosi go raz
+   do wspólnego i KASUJE. Gdyby zostawał, wybór „jak w telefonie” w innym
+   programie (on kasuje gk.motyw) wskrzeszałby tutaj stary wybór.          */
+const MOTYW_WSPOLNY = 'gk.motyw';
 const Motyw = {
   policz(wybor, systemCiemny) {
     return (wybor === 'ciemny' || (wybor !== 'jasny' && systemCiemny)) ? 'ciemny' : 'jasny';
@@ -139,8 +164,23 @@ const Motyw = {
   /* 'jasny' | 'ciemny' | 'auto'. Brak klucza znaczy „jak w telefonie” — nie
      zapisujemy tam 'auto', żeby dało się odróżnić wybór od nigdy niewybrania. */
   odczytaj() {
-    const w = Pamiec.czytaj('motyw');
+    let w = Pamiec.czytajWspolny(MOTYW_WSPOLNY);
+    // Obca wartość (np. 'auto') = brak klucza. Własny klucz istnieje już tylko
+    // przed przejęciem (albo gdy przejęcie się nie udało — tryb prywatny).
+    if (w !== 'jasny' && w !== 'ciemny') w = Pamiec.czytaj('motyw');
     return (w === 'jasny' || w === 'ciemny') ? w : 'auto';
+  },
+  /* Raz, przy starcie: własny klucz → wspólny. Wspólny już ustawiony (inny
+     program GK) wygrywa — własny wtedy tylko znika. Gdy zapis się nie uda
+     (tryb prywatny), własny zostaje, żeby nie zgubić wyboru. */
+  przejmij() {
+    const wlasny = Pamiec.czytaj('motyw');
+    if (!wlasny) return;
+    const wspolny = Pamiec.czytajWspolny(MOTYW_WSPOLNY);
+    const wspolnyUstawiony = wspolny === 'jasny' || wspolny === 'ciemny';
+    if (!wspolnyUstawiony && (wlasny === 'jasny' || wlasny === 'ciemny')
+        && !Pamiec.zapiszWspolny(MOTYW_WSPOLNY, wlasny)) return;   // tryb prywatny — zostaje stary
+    Pamiec.usun('motyw');
   },
   zastosuj() {
     const wybor = this.odczytaj();
@@ -154,15 +194,20 @@ const Motyw = {
   },
   ustaw(wybor) {
     if (wybor === 'jasny' || wybor === 'ciemny') {
-      if (!Pamiec.zapisz('motyw', wybor)) {
+      if (Pamiec.zapiszWspolny(MOTYW_WSPOLNY, wybor)) {
+        Pamiec.usun('motyw');
+      } else {
         komunikat('Nie mogę zapamiętać wyboru w tej przeglądarce — wróci po odświeżeniu', 'blad');
       }
     } else {
+      // „Jak w telefonie” = brak klucza, tak samo jak w pozostałych programach GK.
+      Pamiec.usunWspolny(MOTYW_WSPOLNY);
       Pamiec.usun('motyw');
     }
     return this.zastosuj();
   },
 };
+Motyw.przejmij();
 
 function komunikat(tresc, rodzaj) {
   const pole = document.getElementById('komunikaty');
@@ -559,7 +604,7 @@ const API = {
       opcje.body = JSON.stringify(dane);
     }
     const odp = await pobierz(sciezka, opcje);
-    if (odp.status === 401) { wyloguj(true); throw new Error('Sesja wygasła — zaloguj się ponownie'); }
+    if (odp.status === 401) { sesjaWygasla(); throw new Error('Sesja wygasła — zaloguj się ponownie'); }
     let wynik = null;
     try { wynik = await odp.json(); } catch (e) { wynik = null; }
     if (!odp.ok) {
@@ -707,6 +752,15 @@ async function sprobuj(praca, komunikatSukcesu) {
 /* --------------------------------------------------------- kolejka offline */
 
 async function doKolejki(op, komunikatSukcesu) {
+  // Po odrzuconej sesji ekran jest tylko do odczytu: nowe zapisy dopiero po
+  // ponownym zalogowaniu (sesjaWygasla). Ślad GPS idzie w tle, bez ludzkiej
+  // ręki — po cichu go pomijamy, zamiast straszyć komunikatem co 2 minuty.
+  if (stan.sesjaWygasla) {
+    if (op.typ === 'pozycje') return null;
+    komunikat('Sesja wygasła — zaloguj się ponownie. Nic nie zginęło.', 'blad');
+    oknoPonownegoLogowania();
+    throw new Error('Sesja wygasła — zaloguj się ponownie');
+  }
   // Kto to zapisał. Bez tego kolejka po wylogowaniu przechodzi na następną
   // osobę, która zaloguje się na tym telefonie — serwer odrzuci cudze
   // potwierdzenia, a telefon by je skasował. Czyli utrata pracy kierowcy.
@@ -836,9 +890,23 @@ async function zaloguj(login, pin) {
       + 'Sprawdź adres albo spróbuj za chwilę.');
   }
   if (!odp.ok) throw new Error(wynik.blad || 'Nie udało się zalogować');
+  // Kto był tu ostatnio. Po wygasłej sesji (sesjaWygasla) jego profil
+  // i kartoteka celowo zostały w telefonie — przy tej samej osobie to one
+  // pozwalają wrócić bez utraty czegokolwiek. INNA osoba nie może jednak
+  // dostać cudzej kartoteki (jak przy wylogowaniu). Kolejki nie ruszamy:
+  // cudze zapisy czekają na swojego właściciela (synchronizuj je pomija).
+  let poprzedni = stan.uz;
+  if (!poprzedni) {
+    try { poprzedni = await Kolejka.przypomnij('profil'); } catch (e) { poprzedni = null; }
+  }
+  if (poprzedni && poprzedni.id !== wynik.id) {
+    try { await Kolejka.zapomnij('slowniki'); } catch (e) { /* zaraz i tak nadpisze */ }
+    stan.klienci = []; stan.pojazdy = []; stan.lokalizacje = []; stan.ustawienia = {};
+  }
   stan.token = wynik.token;
   Pamiec.zapisz('token', wynik.token);   // tryb prywatny albo pełna pamięć — zalogowanie i tak ma się udać
   stan.uz = wynik;
+  zakonczTrybDoOdczytu();
   await Kolejka.zapamietaj('profil', wynik);   // zeby jutro wejsc bez zasiegu
   poprosOTrwalaPamiec();
   Powiadomienia.odnow();                       // w tle — logowanie na to nie czeka
@@ -860,6 +928,7 @@ async function wyloguj(cicho) {
   }
   stan.token = ''; stan.uz = null;
   Pamiec.usun('token');
+  zakonczTrybDoOdczytu();
   // Kartoteka klientow i profil zostawaly w telefonie po wylogowaniu —
   // bezterminowo, bo nic ich nigdy nie kasowalo. Zgubiony albo oddany telefon
   // oddawal wtedy komus obcemu cala baze odbiorcow firmy.
@@ -878,6 +947,90 @@ function pokazLogowanie() {
   document.getElementById('ekran-logowania').classList.remove('ukryty');
   document.getElementById('blad-logowania').textContent = '';
   document.getElementById('form-logowania').reset();
+}
+
+/* Serwer odrzucił sesję (401): zmiana PIN-u, konto wyłączone w biurze albo
+   telefon nieużywany ponad 30 dni. Dawniej wyloguj(true) — a ono kasuje
+   profil i kartotekę, więc kierowca w trasie lądował na pustym ekranie
+   logowania i bez zasięgu nie miał już nawet listy punktów.
+
+   Teraz: token znika (i tak nie działa), ale profil, kartoteka i KOLEJKA
+   ZOSTAJĄ. Ekran, na którym kierowca był, zostaje — tylko do odczytu, z wstęgą
+   „Zaloguj się ponownie”. Ta sama osoba loguje się w okienku i wraca dokładnie
+   tam, gdzie była; czekające zapisy wysyłają się same. Inna osoba — jak
+   zwykłe logowanie (zaloguj): cudza kartoteka znika, cudze zapisy nie wychodzą. */
+function sesjaWygasla() {
+  stan.token = '';
+  Pamiec.usun('token');
+  // Bez profilu nie ma czego pokazywać do odczytu (np. sam start aplikacji) —
+  // tam uruchom() pokaże zwykły ekran logowania.
+  if (!stan.uz || stan.sesjaWygasla) return;
+  stan.sesjaWygasla = true;
+  document.body.classList.add('sesja-wygasla');
+  let wstega = document.getElementById('wstega-sesji');
+  const tresc = document.getElementById('tresc');
+  if (!wstega && tresc && tresc.parentNode) {
+    wstega = document.createElement('div');
+    wstega.id = 'wstega-sesji';
+    wstega.className = 'wstega uwaga wstega-sesji';
+    tresc.parentNode.insertBefore(wstega, tresc);
+  }
+  if (wstega) {
+    wstega.innerHTML = 'Sesja wygasła — zapisy czekają w telefonie. '
+      + '<button class="glowny maly" id="btn-zaloguj-ponownie">Zaloguj się ponownie</button>';
+    wstega.querySelector('#btn-zaloguj-ponownie').onclick = oknoPonownegoLogowania;
+  }
+}
+
+function zakonczTrybDoOdczytu() {
+  stan.sesjaWygasla = false;
+  document.body.classList.remove('sesja-wygasla');
+  const wstega = document.getElementById('wstega-sesji');
+  if (wstega && wstega.remove) wstega.remove();
+}
+
+/* Logowanie w okienku nad ekranem tylko do odczytu — nic pod spodem nie znika. */
+function oknoPonownegoLogowania() {
+  const login = (stan.uz && stan.uz.login) || '';
+  okno({
+    tytul: 'Zaloguj się ponownie',
+    tresc: `<p class="male">Nic nie zginęło — zapisy z telefonu wyślą się po zalogowaniu.</p>
+      <label>Imię i nazwisko albo login
+        <input id="pl-login" autocomplete="username" autocapitalize="none" value="${escHtml(login)}"></label>
+      <label>PIN
+        <input id="pl-pin" type="password" inputmode="numeric" autocomplete="current-password"></label>
+      <div class="blad-logowania" id="pl-blad"></div>`,
+    przyciski: [
+      { napis: 'Później', klik: z => z() },
+      { napis: 'Zaloguj', klasa: 'glowny', klik: async z => {
+        const blad = document.getElementById('pl-blad');
+        blad.textContent = '';
+        zajety(true);
+        try {
+          await zalogujPonownie(document.getElementById('pl-login').value.trim(),
+            document.getElementById('pl-pin').value);
+          z();
+        } catch (e) {
+          blad.textContent = poLudzku(e);
+        } finally {
+          zajety(false);
+        }
+      } },
+    ],
+  });
+}
+
+async function zalogujPonownie(login, pin) {
+  const poprzedni = stan.uz ? stan.uz.id : null;
+  const ekran = stan.ekran;
+  await zaloguj(login, pin);
+  if (stan.uz.id !== poprzedni) {
+    await wejdzDoAplikacji();                  // inna osoba: od zera, jak zwykłe logowanie
+    return;
+  }
+  await odswiezStanSieci();
+  synchronizuj(false);
+  if (ekran) pokazEkran(ekran);                // świeże dane w tym samym miejscu
 }
 
 /* --------------------------------------------------------------- ekrany */

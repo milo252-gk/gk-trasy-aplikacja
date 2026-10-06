@@ -2289,6 +2289,15 @@ function podepnijKopie(pole) {
 
 /* ------------------------------------------------- dostęp z internetu */
 
+/* Strażnik tunelu: „✓ działa” znaczy tylko, że program tunelu żyje. Czy adres
+   naprawdę prowadzi do programu, sprawdza strażnik co 2 minuty — tak jak telefon. */
+function straznikTunelu(s) {
+  if (!s || !s.opis) return '';
+  return s.odpowiada === false
+    ? `<div class="wstega uwaga">${escHtml(s.opis)}</div>`
+    : `<p class="male slaby">${escHtml(s.opis)}</p>`;
+}
+
 function kartaTunelu(u) {
   const tunel = u.tunel || {};
   const tryb = u.tunel_tryb || 'brak';
@@ -2309,6 +2318,7 @@ function kartaTunelu(u) {
         <button class="maly" id="u-kopiuj-adres" style="margin-top:8px">Kopiuj adres</button>
       </div>` : ''}
     ${tunel.blad ? `<div class="wstega uwaga">${escHtml(tunel.blad)}</div>` : ''}
+    ${straznikTunelu(tunel.straznik)}
 
     <label class="plaska"><input type="radio" name="tunel" value="brak" ${tryb === 'brak' ? 'checked' : ''}>
       <span><b>Wyłączony</b><br><span class="male slaby">Tylko firmowe wifi.
