@@ -13,7 +13,7 @@
 
 :root{
   color-scheme:light;
-  --wersja-arkusza:'trasex-d8e7201de653';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
+  --wersja-arkusza:'trasex-71596ec98a36';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
 
   /* ---- A) BARWY MARKI -------------------------------------------------
      Wzięte wprost z firmowych znaków — próbkowane z plików logo, nie dobrane
@@ -41,6 +41,11 @@
   --podpis-tlo:#ffffff; --podpis-atrament:#16232f; --podpis-ramka-ok:#1d7a45;
   --mata-zdjecia:#ffffff;      /* passe-partout pod zdjęciem dowodu */
   --logowanie-karta:#ffffff;   /* karta logowania — patrz komentarz przy .karta-logowania */
+  --logowanie-zloto:#8A6A38;   /* koniec gradientu za kartą — ten sam we wszystkich aplikacjach GK */
+  /* Menu i pasek górny stoją na --marka-tlo, które jest ciemne w OBU
+     motywach. Rozjaśnienia liczą się więc od bieli zawsze tak samo.        */
+  --menu-hover:rgba(255,255,255,.08); --menu-wybrany:rgba(255,255,255,.16);
+  --menu-kreska:rgba(255,255,255,.14);
 
   /* ---- B) POWIERZCHNIE, od najniższej do najwyższej -------------------- */
   --tlo:#f5f5f6; --karta:#ffffff; --tlo-podniesione:#ffffff;
@@ -49,7 +54,9 @@
   --karta-ok:#fbfefc; --karta-nie:#fffbfb;
   --toast-tlo:#16232f; --toast-tekst:#ffffff;
   --hover-tlo:rgba(9,20,32,.035); --hover-jasnosc:.97;
-  --zaslona:rgba(9,20,32,.5);
+  /* Zaciemnienie pod oknem: neutralna czerń jak w aplikacjach hali (STYL-GK §3),
+     nie granat — granatowa mgła nad grafitowym programem wyglądała na obcą. */
+  --zaslona:rgba(0,0,0,.45);
   --zaslona-czekanie:rgba(244,246,249,.55);   /* przymglenie przy zapisie */
 
   /* ---- B) RAMKI I TEKST ------------------------------------------------ */
@@ -77,6 +84,7 @@
 
   /* ---- B) GŁĘBIA ------------------------------------------------------ */
   --cien:0 1px 2px rgba(40,40,42,.06), 0 4px 14px rgba(40,40,42,.08);
+  --cien-mocny:0 18px 50px rgba(0,0,0,.28);   /* karta logowania, okno „Moje konto” */
   --obrys-gorny:0 0 0 0 transparent;
 
   --promien:12px; --gora-wys:56px; --dol-wys:60px;
@@ -142,6 +150,7 @@
   --zolty:#EBB55A; --zolty-tlo:#43371C;
 
   --cien:0 1px 2px rgba(0,0,0,.55), 0 6px 20px rgba(0,0,0,.45);
+  --cien-mocny:0 18px 50px rgba(0,0,0,.6);
   --obrys-gorny:inset 0 1px 0 rgba(255,255,255,.05);
 }
 
@@ -159,21 +168,23 @@ h2{font-size:19px} h3{font-size:16px}
 a{color:var(--akcent)}
 
 /* ----------------------------------------------------------- logowanie */
+/* Ten blok jest IDENTYCZNY w GK Trasy i GK Flota (STYL-GK §2) — zmiana
+   w jednym programie to zmiana w obu.                                      */
 .logowanie{
   min-height:100%; display:flex; align-items:center; justify-content:center;
-  /* Grafit GK Factory z pomaranczowym rozswietleniem — te same barwy,
-     co na firmowych materialach. */
-  padding:24px; background:linear-gradient(160deg,#3B3B3B,#4E4E4E 55%,#8A6A38);
+  /* Grafit GK Factory z pomarańczowym rozświetleniem — te same barwy,
+     co na firmowych materiałach i na logowaniu aplikacji hali. */
+  padding:24px;
+  background:linear-gradient(160deg,var(--grafit-ciemny),var(--grafit) 55%,var(--logowanie-zloto));
 }
 .karta-logowania{
   /* Zostaje BIAŁA w obu motywach. Znak GK Factory to przezroczysty PNG
      z grafitowym rysunkiem — na ciemnej karcie zniknąłby całkiem, a gradient
-     pod spodem jest ciemny tak czy owak, więc jasna kartka na ciemnym tle to
-     dzisiejszy, sprawdzony wygląd tego ekranu.
+     pod spodem jest ciemny tak czy owak.
 
      A skoro powierzchnia zostaje biała, to atrament na niej musi zostać ciemny.
      To JEDYNA taka wyspa w programie i bez tych kilku linii w motywie ciemnym
-     „Zaloguj się swoim loginem i PIN-em” byłoby jasnoszare na białym, a błąd
+     „Zaloguj się imieniem i nazwiskiem” byłoby jasnoszare na białym, a błąd
      PIN-u różowy — bo tokeny tekstu jaśnieją pod ciemne karty, których tu nie
      ma. Wartości są celowo te same co w :root: to ta sama biel.             */
   color-scheme:light;
@@ -184,15 +195,18 @@ a{color:var(--akcent)}
   color:var(--tekst);
   width:100%; max-width:360px; background:var(--logowanie-karta);
   border-radius:18px; padding:28px 24px 24px;
-  box-shadow:0 18px 50px rgba(0,0,0,.28); text-align:center;
+  box-shadow:var(--cien-mocny); text-align:center;
 }
 .karta-logowania .znak{font-size:44px; line-height:1}
-.karta-logowania h1{color:var(--grafit)}
-.karta-logowania h1{font-size:22px; margin:8px 0 4px}
+.karta-logowania h1{font-size:22px; margin:8px 0 4px; color:var(--grafit)}
 .karta-logowania .pod{margin:0 0 20px; color:var(--tekst-slaby); font-size:13px}
-.karta-logowania label{display:block; text-align:left; margin-bottom:14px; font-weight:600; font-size:13px}
-.blad-logowania{color:var(--czerwony); font-size:13px; min-height:18px; margin-bottom:8px; font-weight:600}
+.karta-logowania label{display:block; text-align:left; margin-bottom:14px;
+                       font-weight:600; font-size:13px}
 .karta-logowania .info-kont{margin:14px 0 0; color:var(--tekst-slaby); font-size:12.5px; line-height:1.4}
+/* Pusty wiersz błędu nie zajmuje miejsca — bez dziury nad „Zaloguj”, dopóki
+   nie ma czego pokazać (STYL-GK §2). */
+.blad-logowania{color:var(--czerwony); font-size:13px; margin-bottom:8px; font-weight:600}
+.blad-logowania:empty{display:none}
 .wersja-stopka{margin:14px 0 0; text-align:center}
 
 /* ------------------------------------------------------------ formanty */
@@ -247,6 +261,7 @@ button.ikona-btn{border:0; background:none; font-size:19px; padding:0 10px; line
 .stan-sieci.odrzucone{background:var(--stan-blad); animation:puls 1.1s infinite}
 @keyframes puls{50%{opacity:.25}}
 
+/* Menu: blok IDENTYCZNY w GK Trasy i GK Flota. */
 .menu{
   position:fixed; z-index:1060; top:0; left:0; bottom:0; width:250px;
   background:var(--marka-tlo); color:var(--na-marce); border-right:1px solid var(--ramka);
@@ -255,7 +270,7 @@ button.ikona-btn{border:0; background:none; font-size:19px; padding:0 10px; line
   padding-top:env(safe-area-inset-top);
 }
 .menu.otwarte{transform:none}
-.menu-naglowek{padding:20px 18px 14px; border-bottom:1px solid rgba(255,255,255,.14)}
+.menu-naglowek{padding:20px 18px 14px; border-bottom:1px solid var(--menu-kreska)}
 .menu-imie{font-weight:700; font-size:16px}
 .menu-rola{font-size:12px; opacity:.65; text-transform:uppercase; letter-spacing:.6px}
 .menu button{
@@ -263,10 +278,13 @@ button.ikona-btn{border:0; background:none; font-size:19px; padding:0 10px; line
   background:none; border:0; color:var(--na-marce); padding:14px 18px; border-radius:0;
   font-size:15px; min-height:52px;
 }
-.menu button:hover{background:rgba(255,255,255,.08)}
-.menu button.wybrany{background:rgba(255,255,255,.16); box-shadow:inset 3px 0 0 var(--akcent)}
-.menu-stopka{margin-top:auto; padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
-.menu-stopka button{color:var(--akcent)}
+.menu button:hover{background:var(--menu-hover)}
+.menu button.wybrany{background:var(--menu-wybrany); box-shadow:inset 3px 0 0 var(--akcent)}
+.menu .ikona-menu{flex:none; width:22px; text-align:center}
+/* „Wyloguj” na dole to zwykły wiersz menu — kolor menu i ikona, oddzielony
+   kreską — a nie goły pomarańczowy napis (STYL-GK §3, runda 2). */
+.menu-stopka{margin-top:auto; border-top:1px solid var(--menu-kreska);
+             padding-bottom:env(safe-area-inset-bottom)}
 .zaslona{position:fixed; inset:0; background:var(--zaslona); z-index:1050; display:none}
 .zaslona.widoczna{display:block}
 
@@ -427,6 +445,47 @@ tbody tr:hover{background:var(--hover-tlo)}
                               flex:0 1 auto; padding-left:14px; padding-right:14px}
 .okno-stopka button.niszczacy:hover{background:var(--czerwony-tlo)}
 .okno-stopka:empty{display:none}
+
+/* ------------------------------------------ okno „Moje konto” (STYL-GK §3)
+   Ten sam wygląd co okno konta aplikacji hali (wspolne/klient/konto.js →
+   HalaKonto.mojeKonto, hala.css → .hala-okno): 440 px na środku ekranu, także
+   na telefonie; tytuł bez kreski i bez ✕; Wygląd jako pigułki; na dole po
+   prawej „Zamknij” (obrysowany) i „Wyloguj” (grafit). To nadal zwykłe okno()
+   — z klasą .okno-konta na tle — więc chowanie map, warstwy i przewijanie
+   treści działają tak samo jak w każdym innym oknie.
+   Blok jest IDENTYCZNY w GK Trasy i GK Flota.                               */
+.okno-tlo.okno-konta{align-items:center; padding:12px}
+.okno-konta .okno{max-width:440px; border:0; border-radius:16px; box-shadow:var(--cien-mocny);
+                  max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px)}
+.okno-konta .okno-gora{border-bottom:0; padding:18px 20px 6px}
+.okno-konta .okno-tytul{font-size:20px}
+.okno-konta #okno-zamknij{display:none}
+.okno-konta .okno-tresc{padding:6px 20px 4px; display:grid; gap:12px}
+.okno-konta .okno-stopka{border-top:0; justify-content:flex-end;
+                         padding:12px 20px calc(18px + env(safe-area-inset-bottom))}
+.okno-konta .okno-stopka button{flex:0 0 auto; min-height:44px}
+.okno-konta p{margin:0}
+.okno-konta label{margin-bottom:0}
+.okno-konta fieldset{margin:0; padding:8px 12px 12px; border-radius:10px}
+.okno-konta legend{padding:0 4px; color:var(--tekst-slaby)}
+.okno-konta fieldset > * + *{margin-top:8px}
+.okno-konta fieldset > legend + *{margin-top:0}
+.okno-konta fieldset > div:empty{display:none}
+.okno-konta .wstega{margin-bottom:0}
+.okno-konta .wersja-stopka{margin:0; text-align:left}
+.konto-wersja{font-size:12px; color:var(--tekst-slaby)}
+.konto-wersja summary{cursor:pointer; width:max-content}
+.konto-kto{display:grid; gap:2px}
+.konto-kto b{font-size:16px}
+.konto-kto span{font-size:14px; color:var(--tekst-slaby)}
+.konto-drobne{font-size:12px; color:var(--tekst-slaby)}
+.konto-uwaga{font-size:14px; color:var(--zolty)}
+.konto-ok{font-size:14px; font-weight:600; color:var(--zielony)}
+.konto-push > * + *{margin-top:8px}
+.wybor-wygladu{display:flex; flex-wrap:wrap; gap:8px}
+.wybor-wygladu button{min-height:44px; padding:0 14px; font-size:14px; border-radius:999px}
+.wybor-wygladu button[aria-pressed="true"]{background:var(--granat); border-color:var(--granat);
+                                           color:var(--na-marce)}
 
 /* --------------------------------------------------------------- podpis */
 /* Płótno podpisu jest KARTKĄ, nie elementem interfejsu — zostaje białe także

@@ -2531,7 +2531,7 @@ function kartaIkol(u) {
       <b>Nie musicie wykupywać jej dla wszystkich pojazdów</b> — wystarczy dla tych,
       które faktycznie wożą dostawy.</p>
     <p class="male slaby">Póki tego nie ma, położenie busów i tak działa —
-      bezpłatnie, z telefonu kierowcy (ikona 👤 → „Udostępniaj położenie").</p>
+      bezpłatnie, z telefonu kierowcy (ekran „Moje zlecenie” → „Udostępniaj położenie”).</p>
 
     <label class="plaska"><input type="checkbox" id="u-ikol-wlaczony" ${wlaczony ? 'checked' : ''}>
       <b>Pobieraj pozycje z IKOL-a</b></label>
