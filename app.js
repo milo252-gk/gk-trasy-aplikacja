@@ -1,7 +1,7 @@
 /* Rdzen aplikacji: logowanie, przelaczanie ekranow, rozmowa z serwerem
    i wysylanie kolejki offline.                                              */
 
-const WERSJA_SKRYPTU = 'trasex-71596ec98a36';   // stempluje zbuduj.py
+const WERSJA_SKRYPTU = 'trasex-301cc6df025a';   // stempluje zbuduj.py
 
 /* Pamięć przeglądarki (localStorage) — wyłącznie przez Pamiec i ZAWSZE
    z przedrostkiem „gk-trasy.”.
@@ -1367,10 +1367,10 @@ function oknoKonta() {
         </div>
       </fieldset>
       <fieldset><legend>Powiadomienia</legend>
-        <div id="push-konto" class="konto-push"><p class="konto-drobne">Sprawdzam…</p></div>
         <p class="konto-drobne">${jestBiuro()
           ? 'Nieudana dostawa i raport z usterkami — od razu, także przy zamkniętej aplikacji.'
           : 'Nowe albo zmienione zlecenie na dziś i jutro oraz uwagi od biura — także przy zamkniętej aplikacji.'}</p>
+        <div id="push-konto" class="konto-push"><p class="konto-drobne">Sprawdzam…</p></div>
       </fieldset>
       <fieldset><legend>Dane w tym urządzeniu</legend>
         <p class="konto-drobne">Czeka na wysłanie: <span id="ile-w-kolejce">…</span></p>

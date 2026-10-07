@@ -13,7 +13,7 @@
 
 :root{
   color-scheme:light;
-  --wersja-arkusza:'trasex-71596ec98a36';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
+  --wersja-arkusza:'trasex-301cc6df025a';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
 
   /* ---- A) BARWY MARKI -------------------------------------------------
      Wzięte wprost z firmowych znaków — próbkowane z plików logo, nie dobrane
@@ -200,9 +200,16 @@ a{color:var(--akcent)}
 .karta-logowania .znak{font-size:44px; line-height:1}
 .karta-logowania h1{font-size:22px; margin:8px 0 4px; color:var(--grafit)}
 .karta-logowania .pod{margin:0 0 20px; color:var(--tekst-slaby); font-size:13px}
+/* „PIN-em” nie łamie się na dywizie (STYL-GK §2) — jak .bez-lamania w hali. */
+.karta-logowania .bez-lamania{white-space:nowrap}
 .karta-logowania label{display:block; text-align:left; margin-bottom:14px;
                        font-weight:600; font-size:13px}
-.karta-logowania .info-kont{margin:14px 0 0; color:var(--tekst-slaby); font-size:12.5px; line-height:1.4}
+/* Na telefonie pola logowania mają 52 px, jak w hali (D29) — było 48. */
+@media (max-width:820px){ .karta-logowania input{min-height:52px} }
+/* Podpowiedź „np. Jan Kowalski” w szarym tekstu karty (#6d6d72), jak w hali —
+   nie domyślna przeglądarki; opacity 1, bo Firefox dodatkowo ją przygasza. */
+.karta-logowania input::placeholder{color:var(--tekst-slaby); opacity:1}
+.karta-logowania .info-kont{margin:14px 0 0; color:var(--tekst-slaby); font-size:12px; line-height:1.4}
 /* Pusty wiersz błędu nie zajmuje miejsca — bez dziury nad „Zaloguj”, dopóki
    nie ma czego pokazać (STYL-GK §2). */
 .blad-logowania{color:var(--czerwony); font-size:13px; margin-bottom:8px; font-weight:600}
@@ -285,6 +292,10 @@ button.ikona-btn{border:0; background:none; font-size:19px; padding:0 10px; line
    kreską — a nie goły pomarańczowy napis (STYL-GK §3, runda 2). */
 .menu-stopka{margin-top:auto; border-top:1px solid var(--menu-kreska);
              padding-bottom:env(safe-area-inset-bottom)}
+/* Ikona „wyjście” to SVG w currentColor (jak #menu-wyloguj w hali) — na środku
+   22-pikselowej kolumny ikon, bez odstępu linii pod obrazkiem. */
+.menu-stopka .ikona-menu{display:inline-flex; justify-content:center}
+.menu-stopka .ikona-menu svg{display:block}
 .zaslona{position:fixed; inset:0; background:var(--zaslona); z-index:1050; display:none}
 .zaslona.widoczna{display:block}
 
@@ -455,13 +466,17 @@ tbody tr:hover{background:var(--hover-tlo)}
    treści działają tak samo jak w każdym innym oknie.
    Blok jest IDENTYCZNY w GK Trasy i GK Flota.                               */
 .okno-tlo.okno-konta{align-items:center; padding:12px}
+/* Tło karty (--karta), jak dialog.hala-okno w hali: w motywie ciemnym #2A2928,
+   nie jaśniejsze --tlo-podniesione (#333230) zwykłych okien — także pod tytułem
+   i przyciskami (bez tego tytuł i stopka odcinały się jaśniejszymi pasami). */
 .okno-konta .okno{max-width:440px; border:0; border-radius:16px; box-shadow:var(--cien-mocny);
+                  background:var(--karta);
                   max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px)}
-.okno-konta .okno-gora{border-bottom:0; padding:18px 20px 6px}
+.okno-konta .okno-gora{border-bottom:0; padding:18px 20px 6px; background:none}
 .okno-konta .okno-tytul{font-size:20px}
 .okno-konta #okno-zamknij{display:none}
 .okno-konta .okno-tresc{padding:6px 20px 4px; display:grid; gap:12px}
-.okno-konta .okno-stopka{border-top:0; justify-content:flex-end;
+.okno-konta .okno-stopka{border-top:0; justify-content:flex-end; background:none;
                          padding:12px 20px calc(18px + env(safe-area-inset-bottom))}
 .okno-konta .okno-stopka button{flex:0 0 auto; min-height:44px}
 .okno-konta p{margin:0}
