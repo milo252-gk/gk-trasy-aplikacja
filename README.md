@@ -1,2 +1,3 @@
-# gk-trasy-aplikacja
-Wygląd aplikacji GK (GitHub Pages). Bez danych — dane zostają w programach na komputerze w biurze.
+# Przeniesione
+
+Aplikacja jest teraz na https://milo252-gk.github.io/gk-panel-aplikacje/trasy/ — ta strona tylko przekierowuje.

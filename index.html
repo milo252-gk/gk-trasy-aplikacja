@@ -1,193 +1,43 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<!-- Bez maximum-scale: kierowca w słońcu musi móc rozsunąć ekran palcami.
-     Pole podpisu i mapa mają własną obsługę dotyku, więc im to nie przeszkadza. -->
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#4E4E4E">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>GK Trasy — nowy adres</title>
 <script>
-/* Motyw rozstrzygamy PRZED arkuszem. Inaczej pierwszy obraz jest zawsze jasny,
-   a kierowca otwierający aplikację w nocy dostaje w oczy białą kartkę.
-
-   Bez osobnego pliku, i to nie z lenistwa: index.html serwer oddaje
-   z „no-store”, więc ten kawałek NIGDY nie bywa starą kopią. Osobny motyw.js
-   trzeba by dopisywać w trzech ręcznych listach (tu, ZASOBY w sw.js, PLIKI
-   w smoke.js), a pominięcie tej w sw.js oznacza program, który nie wstaje
-   bez zasięgu. W head byłby do tego kolejnym blokującym pobraniem.
-
-   Ta sama reguła co Motyw.policz w app.js. Dwie kopie jednej reguły to dług —
-   spina je test w smoke.js, który wykonuje ten kod i porównuje z app.js.
-
-   Dwa osobne try/catch, bo w Safari w trybie prywatnym sam DOSTĘP do
-   localStorage potrafi rzucić wyjątkiem, a wyjątek w skrypcie w head zatrzymuje
-   parsowanie strony — telefon pokazałby wtedy biały ekran zamiast logowania.
-
-   Najpierw klucz WSPÓLNY programów GK („gk.motyw” — ten sam w Panelu
-   i GK Flota; na GitHub Pages wszystkie aplikacje GK dzielą jeden
-   localStorage). Potem dawne klucze tylko jako migracja (app.js przenosi je
-   do wspólnego): własny z przedrostkiem „gk-trasy.”, a bez przedrostka tylko
-   poza Pages — tam jest cudzy. */
+/* GK Trasy ma nowy adres (D42, jedna strona aplikacji GK). Przenosimy od razu, razem z ?… i #… — w #… bywa
+   jednorazowy kod wejścia z GK Trasy („Moje auto”) albo zaproszenie. */
 (function () {
-  var wybor = null;
+  var NOWY = "https://milo252-gk.github.io/gk-panel-aplikacje/trasy/";
+  var cel = NOWY + location.search + location.hash;
+  try { document.documentElement.setAttribute('data-cel', cel); } catch (e) { /* trudno */ }
+  /* Zainstalowana aplikacja ma tu starego service workera — prosimy o nowy (sw.js), który sprząta po sobie. */
   try {
-    wybor = localStorage.getItem('gk.motyw');
-    // Obca wartość (np. 'auto') znaczy to samo co brak klucza.
-    if (wybor !== 'jasny' && wybor !== 'ciemny') wybor = localStorage.getItem('gk-trasy.motyw');
-    if (wybor === null && !/(^|\.)github\.io$/i.test(String(location.hostname || ''))) {
-      wybor = localStorage.getItem('motyw');
-    }
-  } catch (e) { /* tryb prywatny */ }
-  var systemCiemny = false;
-  try {
-    systemCiemny = !!(window.matchMedia
-      && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  } catch (e) { /* starsza przeglądarka */ }
-  var motyw = (wybor === 'ciemny' || (wybor !== 'jasny' && systemCiemny)) ? 'ciemny' : 'jasny';
-  var korzen = document.documentElement;
-  korzen.setAttribute('data-motyw', motyw);
-  /* Styl wpisany wprost działa od razu; ta sama deklaracja z arkusza dopiero
-     po jego wczytaniu. Po wolnym łączu to widoczna różnica: pola dat, listy
-     rozwijane i autouzupełnianie zdążyłyby mrugnąć bielą. */
-  korzen.style.colorScheme = motyw === 'ciemny' ? 'dark' : 'light';
-  var pasek = document.querySelector('meta[name=theme-color]');
-  if (pasek) pasek.setAttribute('content', motyw === 'ciemny' ? '#191817' : '#4E4E4E');
+    if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistration()
+      .then(function (r) { if (r) r.update(); }).catch(function () {});
+  } catch (e) { /* trudno */ }
+  location.replace(cel);
 })();
 </script>
-<title>GK Trasy</title>
-<link rel="manifest" href="manifest.webmanifest?v=trasex-5bfe74e12c5d">
-<link rel="icon" href="ikona.svg?v=trasex-5bfe74e12c5d">
-<!-- iPhone nie bierze ikony z manifestu ani z SVG — na ekranie poczatkowym
-     pokazywal zrzut strony. Potrzebny jest PNG 180x180. -->
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=trasex-5bfe74e12c5d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="GK Trasy">
-<!-- Ciemny pasek z bialym tekstem — jak naglowek aplikacji (theme-color). -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<link rel="stylesheet" href="vendor/leaflet.css?v=trasex-5bfe74e12c5d">
-<link rel="stylesheet" href="style.css?v=trasex-5bfe74e12c5d">
+<noscript><meta http-equiv="refresh" content="0; url=https://milo252-gk.github.io/gk-panel-aplikacje/trasy/"></noscript>
+<style>
+  body { font: 17px/1.5 "Segoe UI", system-ui, sans-serif; margin: 0; padding: 32px 20px; background: #4E4E4E; color: #fff; }
+  main { max-width: 520px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 12px; }
+  a { color: #E0922E; font-weight: 600; word-break: break-all; }
+</style>
 </head>
 <body>
-
-<!-- ===================================================== EKRAN LOGOWANIA -->
-<div id="ekran-logowania" class="logowanie ukryty">
-  <form class="karta-logowania" id="form-logowania">
-    <img class="znak-logo" src="logo-gkf.png?v=trasex-5bfe74e12c5d"
-         alt="GK Factory" width="666" height="374">
-    <h1>GK Trasy</h1>
-    <p class="pod">Zaloguj się imieniem i&nbsp;nazwiskiem i&nbsp;<span class="bez-lamania">PIN-em</span></p>
-    <!-- Stare loginy (np. „marek”) dalej dzialaja — serwer je zna (GK-KONTA.md, punkt 4). -->
-    <label>Imię i nazwisko
-      <input name="login" autocomplete="username" autocapitalize="none" required
-             placeholder="np. Jan Kowalski">
-    </label>
-    <!-- Bez inputmode="numeric": biuro i administrator maja haslo z liter (min. 8 znakow),
-         a telefon z klawiatura cyfrowa nie dalby go wpisac. -->
-    <label>PIN / hasło
-      <input name="pin" type="password" autocomplete="current-password" required>
-    </label>
-    <div class="blad-logowania" id="blad-logowania"></div>
-    <button class="glowny duzy" type="submit">Zaloguj</button>
-    <!-- Tylko gdy konta przychodza z Panelu (GET /api/zyje → konta_z_panelu). -->
-    <p class="info-kont" id="info-kont" hidden>Konto zakłada administrator w Panelu Kierownika
-      → Administracja.</p>
-  </form>
-</div>
-
-<!-- ============================================================ APLIKACJA -->
-<div id="aplikacja" class="ukryty">
-
-  <header class="gora">
-    <button class="ikona-btn tylko-telefon" id="btn-menu" aria-label="Menu">☰</button>
-    <div class="tytul" id="tytul-ekranu">Pulpit</div>
-    <div class="gora-prawo">
-      <button class="ikona-btn stan-sieci-btn" id="stan-sieci-btn" aria-label="Stan połączenia">
-        <span class="stan-sieci" id="stan-sieci"></span></button>
-      <button class="ikona-btn tylko-biuro" id="btn-szukaj" aria-label="Szukaj dostawy">🔍</button>
-      <!-- Ikona osoby w SVG, nie emoji 👤: Windows rysuje emoji na fioletowo i ginie ono
-           na grafitowym pasku. currentColor = biel paska (STYL-GK §3). -->
-      <button class="ikona-btn" id="btn-konto" aria-label="Moje konto" title="Moje konto"><svg
-        viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="8" r="4"
-        fill="currentColor"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" fill="currentColor"/></svg></button>
-    </div>
-  </header>
-
-  <nav class="menu" id="menu">
-    <div class="menu-naglowek">
-      <img class="menu-logo" src="logo-gkf.png?v=trasex-5bfe74e12c5d" alt="GK Factory"
-           width="666" height="374">
-      <div class="menu-imie" id="menu-imie"></div>
-      <div class="menu-rola" id="menu-rola"></div>
-    </div>
-    <button data-ekran="pulpit"   class="tylko-biuro">📊 <span>Pulpit</span></button>
-    <button data-ekran="trasy"><span class="ikona-menu">🗺️</span>
-      <span class="tylko-biuro">Zlecenia</span><span class="tylko-kierowca">Historia zleceń</span></button>
-    <button data-ekran="szablony" class="tylko-biuro">📋 <span>Zlecenia stałe</span></button>
-    <button data-ekran="moja"     class="tylko-kierowca">🚚 <span>Moje zlecenie</span></button>
-    <button data-ekran="zaladunek" class="tylko-kierowca">📦 <span>Załadunek</span></button>
-    <button data-ekran="zalegle"  class="tylko-biuro">⏰ <span>Zaległe dostawy</span></button>
-    <button data-ekran="klienci">🏢 <span>Klienci</span></button>
-    <button data-ekran="lokalizacje" class="tylko-biuro">🏭 <span>Nasze lokalizacje</span></button>
-    <button data-ekran="zaproszenie" class="tylko-biuro">📲 <span>Zaproś kierowcę</span></button>
-    <button data-ekran="raporty">🕒 <span>Raport pracy</span></button>
-    <!-- Widoczne tylko u kierowcy i tylko przy połączeniu z GK Flota (menuDlaRoli). -->
-    <button data-ekran="mojeauto" id="btn-moje-auto" class="ukryty">🔧 <span>Moje auto</span></button>
-    <button data-ekran="ustawienia" class="tylko-administrator">⚙️ <span>Ustawienia</span></button>
-    <div class="menu-stopka">
-      <!-- Ikona „wyjście” w SVG, ta sama co #menu-wyloguj w aplikacjach hali
-           (STYL-GK §3): currentColor = biel menu, nie brązowe emoji drzwi. -->
-      <button id="btn-wyloguj"><span class="ikona-menu" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span> <span>Wyloguj</span></button>
-    </div>
-  </nav>
-  <div class="zaslona" id="zaslona"></div>
-
-  <main id="tresc"></main>
-
-  <nav class="pasek-dolny tylko-telefon" id="pasek-dolny"></nav>
-</div>
-
-<!-- ============================================================== OKIENKA -->
-<div class="okno-tlo ukryty" id="okno-tlo">
-  <div class="okno" id="okno">
-    <div class="okno-gora">
-      <div class="okno-tytul" id="okno-tytul"></div>
-      <button class="ikona-btn" id="okno-zamknij" aria-label="Zamknij">✕</button>
-    </div>
-    <div class="okno-tresc" id="okno-tresc"></div>
-    <div class="okno-stopka" id="okno-stopka"></div>
-  </div>
-</div>
-
-<!-- Pytanie "na pewno?" ma WŁASNĄ warstwę nad oknem. Wcześniej korzystało
-     z tego samego okna co formularze, więc zadanie pytania kasowało formularz,
-     w którym padło — kierowca kasujący jedno zdjęcie tracił podpis i resztę. -->
-<div class="okno-tlo pytanie-tlo ukryty" id="pytanie-tlo">
-  <div class="okno pytanie">
-    <div class="okno-gora"><div class="okno-tytul" id="pytanie-tytul"></div></div>
-    <div class="okno-tresc" id="pytanie-tresc"></div>
-    <div class="okno-stopka" id="pytanie-stopka"></div>
-  </div>
-</div>
-
-<div id="komunikaty" class="komunikaty"></div>
-<div id="zajetosc" class="zajetosc ukryty"><div class="kolo"></div></div>
-
-<script src="vendor/leaflet.js?v=trasex-5bfe74e12c5d"></script>
-<!-- app.js pierwszy: to on zaklada wspolny 'stan' i rejestr EKRANY,
-     z ktorych korzystaja biuro.js i kierowca.js. -->
-<script src="kolejka.js?v=trasex-5bfe74e12c5d"></script>
-<script src="mapa.js?v=trasex-5bfe74e12c5d"></script>
-<script src="podpis.js?v=trasex-5bfe74e12c5d"></script>
-<script src="skrot.js?v=trasex-5bfe74e12c5d"></script>
-<script src="app.js?v=trasex-5bfe74e12c5d"></script>
-<script src="eta.js?v=trasex-5bfe74e12c5d"></script>
-<script src="dowody.js?v=trasex-5bfe74e12c5d"></script>
-<script src="biuro.js?v=trasex-5bfe74e12c5d"></script>
-<script src="import.js?v=trasex-5bfe74e12c5d"></script>
-<script src="firma.js?v=trasex-5bfe74e12c5d"></script>
-<script src="szablony.js?v=trasex-5bfe74e12c5d"></script>
-<script src="zaproszenie.js?v=trasex-5bfe74e12c5d"></script>
-<script src="kierowca.js?v=trasex-5bfe74e12c5d"></script>
+<main>
+  <h1>GK Trasy ma nowy adres</h1>
+  <p>Aplikacja przeniosła się na wspólną stronę aplikacji GK. Za chwilę otworzy się sama — jeśli nie, dotknij:</p>
+  <p><a id="nowy" href="https://milo252-gk.github.io/gk-panel-aplikacje/trasy/">https://milo252-gk.github.io/gk-panel-aplikacje/trasy/</a></p>
+  <p>Na nowym adresie dodaj aplikację do ekranu głównego jeszcze raz, a starą ikonę usuń. Logowanie i zapisy
+    czekające w telefonie zostają.</p>
+</main>
+<script>
+  try { var l = document.getElementById('nowy'); l.href = l.href + location.search + location.hash; } catch (e) { /* trudno */ }
+</script>
 </body>
 </html>
