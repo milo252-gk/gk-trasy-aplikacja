@@ -13,7 +13,7 @@
 
 :root{
   color-scheme:light;
-  --wersja-arkusza:'trasex-301cc6df025a';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
+  --wersja-arkusza:'trasex-5bfe74e12c5d';   /* stempluje zbuduj.py — NIGDY dwa razy w tym pliku */
 
   /* ---- A) BARWY MARKI -------------------------------------------------
      Wzięte wprost z firmowych znaków — próbkowane z plików logo, nie dobrane
@@ -491,7 +491,7 @@ tbody tr:hover{background:var(--hover-tlo)}
 .konto-wersja{font-size:12px; color:var(--tekst-slaby)}
 .konto-wersja summary{cursor:pointer; width:max-content}
 .konto-kto{display:grid; gap:2px}
-.konto-kto b{font-size:16px}
+.konto-kto b{font-size:16px; font-weight:600}
 .konto-kto span{font-size:14px; color:var(--tekst-slaby)}
 .konto-drobne{font-size:12px; color:var(--tekst-slaby)}
 .konto-uwaga{font-size:14px; color:var(--zolty)}

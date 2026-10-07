@@ -2,7 +2,7 @@
    Trzyma kopie samego programu (HTML, style, skrypty, mapa). Danych nie
    buforuje tutaj — od tego jest IndexedDB w kolejka.js.                      */
 
-const WERSJA = 'trasex-301cc6df025a';
+const WERSJA = 'trasex-5bfe74e12c5d';
 /* Zasoby wołamy ZE STEMPLEM wersji w adresie (?v=...). To jedyne, czego żadna
    pamięć podręczna nie obejdzie: po zmianie pliku zmienia się adres, więc stara
    kopia nie ma jak zostać podana. Poprzednio wystarczyło, że przeglądarka
